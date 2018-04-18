@@ -6,7 +6,11 @@
         xmlns:local="clr-namespace:GridPagination"
         mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="525">
-    <Grid>
-        
-    </Grid>
+    <Border Padding="15"
+            BorderBrush="AliceBlue"
+            BorderThickness="3">
+        <Grid>
+            <local:PagedDataGrid x:Name="MyGrid"/>
+        </Grid>
+    </Border>
 </Window>
