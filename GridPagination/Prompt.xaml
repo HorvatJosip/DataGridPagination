@@ -1,0 +1,30 @@
+﻿<Window x:Class="GridPagination.Prompt"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GridPagination"
+        mc:Ignorable="d"
+        SizeToContent="WidthAndHeight"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen">
+    <Border BorderBrush="SandyBrown" BorderThickness="1">
+    <StackPanel>
+        <Grid Background="LightGray" MouseDown="Grid_MouseDown">
+            <TextBlock FontSize="20" x:Name="Title"
+                       HorizontalAlignment="Center" Padding="5"/>
+        </Grid>
+        <Border Padding="10">
+            <StackPanel>
+                <Label x:Name="lblInput"/>
+                <TextBox x:Name="txtInput"/>
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="OK" IsDefault="True" Click="Button_Click"/>
+                    <Button Content="Cancel" IsCancel="True"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+    </Border>
+</Window>

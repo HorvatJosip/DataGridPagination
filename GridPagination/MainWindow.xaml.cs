@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System.Linq;
+using System.Collections.ObjectModel;
 using System.Windows;
 
 namespace GridPagination
@@ -12,15 +13,15 @@ namespace GridPagination
         {
             InitializeComponent();
 
-            MyGrid.ItemsSource = new ObservableCollection<string>
-            {
-                "Bla", "Bla 2", "Bla 11", "Bla 16", "Shit 1", "Shit 2", "Shit 3", "Shit 4", "Shit 5",
-                "Bla", "Bla 2", "Bla 11", "Bla 16", "Shit 1", "Shit 2", "Shit 3", "Shit 4", "Shit 5",
-                "Bla", "Bla 2", "Bla 11", "Bla 16", "Shit 1", "Shit 2", "Shit 3", "Shit 4", "Shit 5",
-                "Bla", "Bla 2", "Bla 11", "Bla 16", "Shit 1", "Shit 2", "Shit 3", "Shit 4", "Shit 5",
-                "Bla", "Bla 2", "Bla 11", "Bla 16", "Shit 1", "Shit 2", "Shit 3", "Shit 4", "Shit 5",
-                "Bla", "Bla 2", "Bla 11", "Bla 16", "Shit 1", "Shit 2", "Shit 3", "Shit 4", "Shit 5"
-            };
+            using (var model = new DAL.DataModel())
+                MyGrid.ItemsSource = new ObservableCollection<object>(model.Kupacs.Select(kupac => new
+                {
+                    kupac.IDKupac,
+                    kupac.Ime,
+                    kupac.Prezime,
+                    kupac.Telefon,
+                    kupac.GradID
+                }));
         }
     }
 }

@@ -1,18 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace GridPagination
 {
@@ -23,8 +15,19 @@ namespace GridPagination
     {
         #region Fields
 
+        #region Page Number Constants
+
+        private const int NumPageButtons = 10;
+        private const int NumPagesDisplayedOnTheLeft = 5;
+        private const int NumPagesDisplayedOnTheRight = 4;
+
+        #endregion
+
         private int currentPage;
-        private List<string> originalData;
+        private List<object> originalData;
+        private List<object> filteredData;
+        private bool filterMode;
+        private bool forceOriginalCollection;
 
         #endregion
 
@@ -35,16 +38,31 @@ namespace GridPagination
             get => currentPage;
             private set
             {
-                if(value != currentPage && value >= 1 && value <= MaxPage)
+                if (value != currentPage && PageExists(value))
                 {
                     currentPage = value;
 
                     DisplayPage();
+                    AddPageButtons();
                 }
             }
         }
 
-        private int MaxPage => (originalData.Count / PageSize) + 1;
+        public int MaxPage =>
+            CurrentList.Count % PageSize != 0
+                ? (CurrentList.Count / PageSize) + 1
+                : (CurrentList.Count / PageSize);
+
+        private ICollection<object> CurrentList
+        {
+            get
+            {
+                if (filterMode)
+                    return filteredData;
+                else
+                    return originalData;
+            }
+        }
 
         #endregion
 
@@ -66,9 +84,9 @@ namespace GridPagination
 
 
 
-        public ObservableCollection<string> ItemsSource
+        public ObservableCollection<object> ItemsSource
         {
-            get { return (ObservableCollection<string>)GetValue(ItemsSourceProperty); }
+            get { return (ObservableCollection<object>)GetValue(ItemsSourceProperty); }
             set
             {
                 SetValue(ItemsSourceProperty, value);
@@ -77,13 +95,15 @@ namespace GridPagination
                 {
                     originalData = value?.ToList();
                     CurrentPage = 1;
+                    AddPageButtons();
+                    CreateFilterMenu();
                 }
             }
         }
 
         // Using a DependencyProperty as the backing store for ItemsSource.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty ItemsSourceProperty =
-            DependencyProperty.Register("ItemsSource", typeof(ObservableCollection<string>), typeof(PagedDataGrid), new PropertyMetadata(null));
+            DependencyProperty.Register("ItemsSource", typeof(ObservableCollection<object>), typeof(PagedDataGrid), new PropertyMetadata(null));
 
 
 
@@ -138,11 +158,28 @@ namespace GridPagination
 
 
 
+        public ICommand ClearFiltersCmd
+        {
+            get { return (ICommand)GetValue(ClearFiltersCmdProperty); }
+            set { SetValue(ClearFiltersCmdProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for ClearFiltersCmd.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty ClearFiltersCmdProperty =
+            DependencyProperty.Register("ClearFiltersCmd", typeof(ICommand), typeof(PagedDataGrid), new PropertyMetadata(null));
+
+
+
 
         public int PageSize
         {
             get { return (int)GetValue(PageSizeProperty); }
-            set { SetValue(PageSizeProperty, value); }
+            set
+            {
+                SetValue(PageSizeProperty, value);
+
+                DisplayPage();
+            }
         }
 
         // Using a DependencyProperty as the backing store for PageSize.  This enables animation, styling, binding, etc...
@@ -168,25 +205,100 @@ namespace GridPagination
             NextCmd = new RelayCommand(obj => CurrentPage++);
 
             LastCmd = new RelayCommand(obj => CurrentPage = MaxPage);
+
+            ClearFiltersCmd = new RelayCommand(obj =>
+            {
+                if (filterMode)
+                {
+                    filterMode = false;
+
+                    forceOriginalCollection = true;
+                    currentPage = 2;
+                    CurrentPage = 1;
+                    forceOriginalCollection = false;
+                }
+            });
         }
 
         #endregion
 
         #region Methods
 
+        private bool PageExists(int page) => page >= 1 && page <= MaxPage;
+
         private void DisplayPage()
         {
-            var startingPoint = originalData.Skip((currentPage - 1) * PageSize);
+            var collection = forceOriginalCollection ? originalData : CurrentList;
+
+            var startingPoint = collection.Skip((currentPage - 1) * PageSize);
 
             if (startingPoint == null || startingPoint.Count() == 0)
                 return;
 
-            ItemsSource = new ObservableCollection<string>();
+            ItemsSource = new ObservableCollection<object>();
 
             for (int i = 0; i < PageSize && i < startingPoint.Count(); i++)
                 ItemsSource.Add(startingPoint.ElementAt(i));
 
             PageNumberInfo = $"Page {CurrentPage} of {MaxPage}";
+        }
+
+        private void AddPageButtons()
+        {
+            PageButtons.Children.Clear();
+
+            int startPage = currentPage - NumPagesDisplayedOnTheLeft;
+            int endPage = currentPage + NumPagesDisplayedOnTheRight;
+
+            if (startPage < 1)
+            {
+                startPage = 1;
+                endPage = NumPageButtons;
+            }
+
+            if (endPage > MaxPage)
+                endPage = MaxPage;
+
+            if (MaxPage >= NumPageButtons && endPage - startPage != (NumPageButtons - 1))
+                startPage = endPage - (NumPageButtons - 1);
+
+            for (int i = startPage; i <= endPage; i++)
+            {
+                int pageNum = i;
+
+                if (PageExists(pageNum))
+                    PageButtons.Children.Add(new Button
+                    {
+                        Content = pageNum.ToString(),
+                        Command = new RelayCommand(obj => CurrentPage = pageNum)
+                    });
+            }
+        }
+
+        private void CreateFilterMenu()
+        {
+            var obj = originalData[0];
+
+            foreach (var prop in obj.GetType().GetProperties())
+            {
+                FilterMenu.Items.Add(new MenuItem
+                {
+                    Header = prop.Name,
+                    Command = new RelayCommand(param =>
+                    {
+                        var window = new Prompt("Filter by " + prop.Name, "Value to find:");
+
+                        if (window.ShowDialog() != true)
+                            return;
+
+                        filterMode = true;
+                        filteredData = originalData.Where(item => Equals(prop.GetValue(item)?.ToString(), window.Input)).ToList();
+
+                        currentPage = 2;
+                        CurrentPage = 1;
+                    })
+                });
+            }
         }
 
         #endregion

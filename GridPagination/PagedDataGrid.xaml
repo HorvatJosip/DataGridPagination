@@ -6,41 +6,56 @@
              xmlns:local="clr-namespace:GridPagination"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+    <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Auto">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-        <DataGrid ItemsSource="{Binding ItemsSource}"
-                  AutoGenerateColumns="True"
-                  x:Name="Shit"/>
+            <Menu Background="White"
+                  Grid.Row="0">
+                <MenuItem Header="Filter"
+                      x:Name="FilterMenu"/>
+                <MenuItem Header="Clear Filters"
+                      Command="{Binding ClearFiltersCmd}"/>
+            </Menu>
 
-        <StackPanel Orientation="Horizontal"
-                    Grid.Row="1">
-            <!-- 10 buttons for navigation -->
-        </StackPanel>
+            <DataGrid ItemsSource="{Binding ItemsSource}"
+                      AutoGenerateColumns="True"
+                      RowHeaderWidth="0"
+                      Background="White"
+                      Grid.Row="1"/>
 
-        <StackPanel Orientation="Horizontal"
-                    Height="30"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Top"
-                    Grid.Row="2">
-            <Button Content="&lt;&lt;"
-                    Command="{Binding FirstCmd}"/>
-            <Button Content="&lt;"
-                    Command="{Binding PreviousCmd}"/>
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        Grid.Row="2"
+                        x:Name="PageButtons"
+                        Height="30"/>
 
-            <TextBlock Text="{Binding PageNumberInfo}"
-                       Margin="5 0"
-                       VerticalAlignment="Center"
-                       FontSize="16"/>
+            <StackPanel Orientation="Horizontal"
+                        Height="30"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Top"
+                        Grid.Row="3">
+                <Button Content="&lt;&lt;"
+                        Command="{Binding FirstCmd}"/>
+                <Button Content="&lt;"
+                        Command="{Binding PreviousCmd}"/>
 
-            <Button Content="&gt;"
-                    Command="{Binding NextCmd}"/>
-            <Button Content="&gt;&gt;"
-                    Command="{Binding LastCmd}"/>
-        </StackPanel>
-    </Grid>
+                <TextBlock Text="{Binding PageNumberInfo}"
+                           Margin="5 0"
+                           VerticalAlignment="Center"
+                           FontSize="16"/>
+
+                <Button Content="&gt;"
+                        Command="{Binding NextCmd}"/>
+                <Button Content="&gt;&gt;"
+                        Command="{Binding LastCmd}"/>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
 </UserControl>
